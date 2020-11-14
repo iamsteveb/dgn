@@ -31,11 +31,18 @@
              (disjoint (corners b) (corners a)))))
   )
 
+(defn diff [a b]
+  (Math/abs (- a b)))
+
 (defn dist [r1 r2]
   (let [{x1 :x y1 :y} (center r1)
         {x2 :x y2 :y} (center r2)]
-    (Math/sqrt (+ (Math/pow (Math/abs (- x1 x2)) 2)
-                                   (Math/pow (Math/abs (- y1 y2)) 2)))))
+    (Math/sqrt (+ (Math/pow (diff x1 x2) 2)
+                  (Math/pow (diff y1 y2) 2)))))
+
+(defn impact-of [{x1 :x y1 :y :as a } {x2 :x y2 :y :as b}]
+  (let [d (dist a b)]
+    (hash-map :x (/ (- x1 x2) d) :y (/ (- y1 y2) d))))
 
 (defn rect [context {:keys [stroke-style fill-style]} {:keys [w h] :as r1}]
   (let [{{:keys [x y]} :top-left} (corners r1)]
