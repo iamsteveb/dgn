@@ -15,14 +15,37 @@
 (defn create-level [context nbr-of-rooms]
   (repeatedly nbr-of-rooms #(create-room context)))
 
-(defn rect [context {:keys [stroke-style fill-style]} {:keys [x y w h]}]
-  (.beginPath context)
-  (when stroke-style (set! (.-strokeStyle context) stroke-style))
-  (when fill-style (set! (.-fillStyle context) fill-style))
-  (.rect context (- x (quot w 2)) (- y (quot h 2)) w h)
-  (when stroke-style (.stroke context))
-  (when fill-style (.fill context))
-  (.closePath context))
+(defn corners [{:keys [x y w h]}]
+  (let [hw (/ w 2)
+        hh (/ h 2)]
+    {:top-left     {:x (- x hw) :y (- y hh)}
+     :bottom-right {:x (+ x hw) :y (+ y hh)}}))
+
+(defn center [r]
+  r)
+
+(defn intersect [a b]
+  (let [disjoint #(or (< (-> %1 :bottom-right :x) (-> %2 :top-left :x)) ; a left of b
+                      (< (-> %1 :bottom-right :y) (-> %2 :top-left :y)))] ; a above b
+    (not (or (disjoint (corners a) (corners b))
+             (disjoint (corners b) (corners a)))))
+  )
+
+(defn dist [r1 r2]
+  (let [{x1 :x y1 :y} (center r1)
+        {x2 :x y2 :y} (center r2)]
+    (Math/sqrt (+ (Math/pow (Math/abs (- x1 x2)) 2)
+                                   (Math/pow (Math/abs (- y1 y2)) 2)))))
+
+(defn rect [context {:keys [stroke-style fill-style]} {:keys [w h] :as r1}]
+  (let [{{:keys [x y]} :top-left} (corners r1)]
+    (.beginPath context)
+    (when stroke-style (set! (.-strokeStyle context) stroke-style))
+    (when fill-style (set! (.-fillStyle context) fill-style))
+    (.rect context x y w h)
+    (when stroke-style (.stroke context))
+    (when fill-style (.fill context))
+    (.closePath context)))
 
 (defn draw [context {:keys [x y] :as dimensions}]
   (rect context
@@ -30,6 +53,5 @@
          :fill-style   "rgba(0,255,0,0.25)"}
         dimensions)
   (rect context
-        {:fill-style   "rgb(255,255,255)"}
-        {:x x :y y :w 10 :h 10})
-  )
+        {:fill-style "rgb(255,255,255)"}
+        {:x x :y y :w 10 :h 10}))

@@ -9,7 +9,7 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 (def context {:width 900 :height 600})
-(def app-state (atom (room/create-level context 25)))
+(def app-state (atom (room/create-level context 20)))
 
 ;; specify reload hook with ^;after-load metadata
 (defn ^:after-load on-reload []
