@@ -17,20 +17,30 @@
                 {:fill-style "rgb(0,0,0)"}
                 {:x 450 :y 300 :w 900 :h 600}))
 
+(defn draw-all []
+  (let [canvas (gdom/getElement "dgc")
+        ctx    (.getContext canvas "2d")]
+    (clear-canvas ctx)
+    (room/draw-all ctx @app-state)))
+
+(defonce interval (atom 0))
+
+(defn animate-separation []
+  (let [old-rooms @app-state]
+    (swap! app-state room/adjust-all)
+    (draw-all)
+    (when (= old-rooms @app-state)
+      (js/clearInterval @interval)))
+  )
+
 ;; specify reload hook with ^;after-load metadata
 (defn ^:after-load on-reload []
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
-  (let [canvas (gdom/getElement "dgc")
-        ctx    (.getContext canvas "2d")]
-    (clear-canvas ctx)
-    (room/draw-all ctx @app-state)
-    (.addEventListener canvas "click"
-                       (fn [&_]
-                         (swap! app-state room/adjust-all)
-                         (clear-canvas ctx)
-                         (room/draw-all ctx @app-state))))
+  (draw-all)
   )
 
 (on-reload)
+
+(reset! interval (js/setInterval animate-separation 200))
