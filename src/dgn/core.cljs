@@ -1,7 +1,8 @@
 (ns ^:figwheel-hooks dgn.core
   (:require
-   [goog.dom :as gdom]
-   [dgn.room :as room]))
+    [goog.dom :as gdom]
+    [dgn.room :as room]
+    [dgn.drawing :as drawing]))
 
 (println "This text is printed from src/dgn/core.cljs. Go ahead and edit it and see reloading in action.")
 
@@ -9,7 +10,7 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 (def context {:width 900 :height 600})
-(def app-state (atom (room/create-level context 30)))
+(def app-state (atom (room/create-level context 50)))
 
 ;; specify reload hook with ^;after-load metadata
 (defn ^:after-load on-reload []
@@ -18,11 +19,9 @@
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
   (let [canvas (gdom/getElement "dgc")
         ctx    (.getContext canvas "2d")]
-    (.beginPath ctx)
-    (set! (.-fillStyle ctx) "rgb(0,0,0)")
-    (.rect ctx 0 0 900 600)
-    (.fill ctx)
-    (.closePath ctx)
+    (drawing/rect ctx
+                  {:fill-style "rgb(0,0,0)"}
+                  {:x 0 :y 0 :w 900 :h 600})
     (doseq [room @app-state]
       (println room)
       (room/draw ctx room))
