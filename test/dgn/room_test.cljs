@@ -43,4 +43,7 @@
 
     (is (position-roughly= {:x 0.235 :y -0.235}
                            (room/combined-impact-of r1 rooms)))
+
+    (is (position-roughly= {:x (+ 100 0.235) :y (+ 100 -0.235)}
+                           (room/move-away-from-all r1 rooms)))
     ))
