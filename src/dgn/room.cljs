@@ -46,7 +46,6 @@
 
 (defn draw-all [context rooms]
   (doseq [room rooms]
-    (println room)
     (draw context room)))
 
 (defn make [x y w h]
@@ -59,12 +58,10 @@
 
 (defn combined-impact-of [r1 rooms]
   (let [i (intersectors r1 rooms)]
-    (if (empty? i)
-      {:x 0 :y 0}
-      (v// (->> i
-                (map #(impact-of r1 %))
-                (apply v/+))
-           (count i)))))
+    (v// (->> i
+              (map #(impact-of r1 %))
+              (apply v/+))
+         (count i))))
 
 (defn move-away-from-all [r1 rooms]
   (->> rooms
