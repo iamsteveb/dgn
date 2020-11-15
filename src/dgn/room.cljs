@@ -1,4 +1,5 @@
-(ns dgn.room)
+(ns dgn.room
+  (:require [dgn.vector :as v]))
 
 (defn rand-between [lower upper]
   (+ lower (rand-int (- upper lower))))
@@ -31,18 +32,13 @@
              (disjoint (corners b) (corners a)))))
   )
 
-(defn diff [a b]
-  (Math/abs (- a b)))
-
 (defn dist [r1 r2]
-  (let [{x1 :x y1 :y} (center r1)
-        {x2 :x y2 :y} (center r2)]
-    (Math/sqrt (+ (Math/pow (diff x1 x2) 2)
-                  (Math/pow (diff y1 y2) 2)))))
+  (v/length (v/- r1 r2)))
 
-(defn impact-of [{x1 :x y1 :y :as a } {x2 :x y2 :y :as b}]
-  (let [d (dist a b)]
-    (hash-map :x (/ (- x1 x2) d) :y (/ (- y1 y2) d))))
+(defn impact-of [r1 r2]
+  (if (= 0 (dist r1 r2))
+    {:x 0 :y 0}
+    (v/normalise (v/- r1 r2))))
 
 (defn rect [context {:keys [stroke-style fill-style]} {:keys [w h] :as r1}]
   (let [{{:keys [x y]} :top-left} (corners r1)]

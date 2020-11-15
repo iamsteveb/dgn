@@ -1,13 +1,19 @@
 (ns dgn.vector
-  (:refer-clojure :exclude [-]))
+  (:refer-clojure :exclude [- /])
+  (:require [medley.core :as m]))
 
-(defn - [{x1 :x y1 :y} {x2 :x y2 :y}]
-  {:x (clojure.core/- x1 x2) :y (clojure.core/- y1 y2)})
+(defn - [& vs]
+  (apply m/map-vals (fn [& ds] (apply clojure.core/- ds)) vs))
 
-(defn length [{:keys [x y]}]
-  (Math/sqrt (+ (Math/pow x 2)
-                (Math/pow y 2))))
+(defn / [v d]
+  (m/map-vals #(clojure.core// % d) v))
 
-(defn normalise [{:keys [x y] :as v}]
-  (let [l (length v)]
-    {:x (/ x l) :y (/ y l)}))
+(defn length [v]
+  (->> v
+       vals
+       (map #(Math/pow % 2))
+       (apply +)
+       Math/sqrt))
+
+(defn normalise [v]
+  (/ v (length v)))
