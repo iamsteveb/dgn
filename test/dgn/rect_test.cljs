@@ -31,3 +31,22 @@
       (check-corners room-1 97.5 97.5 102.5 102.5)
       (check-corners room-2 102.5 102.5 107.5 107.5)
       (is (rect/intersect room-1 room-2)))))
+
+(deftest overlap
+  ; ----
+  ;  --
+  (is (= {:x 100, :w 10} (rect/overlap {:x 100 :w 20} {:x 105 :w 10} :x)))
+  (is (= {:x 100, :w 10} (rect/overlap {:x 105 :w 10} {:x 100 :w 20} :x)))
+  ; ----
+  ;   ----
+  (is (= {:x 100, :w 10} (rect/overlap {:x 100 :w 20} {:x 110 :w 20} :x)))
+  (is (= {:x 100, :w 10} (rect/overlap {:x 110 :w 20} {:x 100 :w 20} :x)))
+
+  ;    --
+  ; --
+  (is (= {:x 90, :w -10} (rect/overlap {:x 100 :w 20} {:x 70 :w 20} :x)))
+  (is (= {:x 90, :w -10} (rect/overlap {:x 70 :w 20} {:x 100 :w 20} :x)))
+  ; --
+  ;    --
+  (is (= {:x 120, :w -10} (rect/overlap {:x 100 :w 20} {:x 130 :w 20} :x)))
+  (is (= {:x 120, :w -10} (rect/overlap {:x 130 :w 20} {:x 100 :w 20} :x))))

@@ -10,7 +10,7 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 (def context {:width 900 :height 600})
-(def app-state (atom (room/create-level context 25)))
+(def app-state (atom (room/create-level context 20)))
 
 (defn clear-canvas [ctx]
   (drawing/rect ctx
@@ -23,6 +23,15 @@
     (clear-canvas ctx)
     (room/draw-all ctx @app-state)))
 
+(defn draw-doors []
+  (let [canvas (gdom/getElement "dgc")
+        ctx    (.getContext canvas "2d")]
+    (doseq [r @app-state]
+      (doseq [d (room/generate-doors r @app-state)]
+        (drawing/rect ctx
+                      {:fill-style "rgb(255,255,255)"}
+                      d)))))
+
 (defonce interval (atom 0))
 
 (defn animate-separation []
@@ -30,7 +39,8 @@
     (swap! app-state room/adjust-all)
     (draw-all)
     (when (= old-rooms @app-state)
-      (js/clearInterval @interval)))
+      (js/clearInterval @interval)
+      (draw-doors)))
   )
 
 ;; specify reload hook with ^;after-load metadata
@@ -43,4 +53,4 @@
 
 (on-reload)
 
-(reset! interval (js/setInterval animate-separation 200))
+(reset! interval (js/setInterval animate-separation 100))

@@ -1,22 +1,24 @@
 (ns dgn.room
   (:require [dgn.vector :as v]
             [dgn.drawing :as drawing]
-            [dgn.rect :as rect]))
+            [dgn.rect :as rect]
+            [medley.core :as medley]))
 
 (defn rand-between [lower upper]
   (+ lower (rand-int (- upper lower))))
 
-(defn create-room [{:keys [width height]}]
+(defn create-room [id {:keys [width height]}]
   (let [margin-ratio  4
         width-margin  (quot width margin-ratio)
         height-margin (quot height margin-ratio)]
-    {:x (rand-between width-margin (- width width-margin))
-     :y (rand-between height-margin (- height height-margin))
-     :h (rand-between (quot height 20) (quot height 10))
-     :w (rand-between (quot width 20) (quot width 10))}))
+    {:x  (rand-between width-margin (- width width-margin))
+     :y  (rand-between height-margin (- height height-margin))
+     :h  (* 2 (quot (rand-between (quot height 20) (quot height 10)) 2))
+     :w  (* 2 (quot (rand-between (quot width 20) (quot width 10)) 2))
+     :id id}))
 
 (defn create-level [context nbr-of-rooms]
-  (repeatedly nbr-of-rooms #(create-room context)))
+  (map #(create-room % context) (range nbr-of-rooms)))
 
 (defn center [r]
   (select-keys r [:x :y]))
@@ -35,14 +37,16 @@
          (apply v/-)
          v/normalise)))
 
-(defn draw [context {:keys [x y] :as dimensions}]
+(defn draw [context {:keys [x y id] :as dimensions}]
   (drawing/rect context
                 {:stroke-style "rgb(0,255,0)"
                  :fill-style   "rgba(0,255,0,0.25)"}
                 dimensions)
-  (drawing/rect context
-                {:fill-style "rgb(255,255,255)"}
-                {:x x :y y :w 10 :h 10}))
+  (set! (.-textBaseline context) "middle")
+  (set! (.-textAlign context) "center")
+  (set! (.-strokeStyle context) "rgb(255,255,255)")
+  (.strokeText context id x y)
+  )
 
 (defn draw-all [context rooms]
   (doseq [room rooms]
@@ -58,10 +62,11 @@
 
 (defn combined-impact-of [r1 rooms]
   (let [i (intersectors r1 rooms)]
-    (v// (->> i
-              (map #(impact-of r1 %))
-              (apply v/+))
-         (count i))))
+    (->> (v// (->> i
+                   (map #(impact-of r1 %))
+                   (apply v/+))
+              (count i))
+         (medley/map-vals #(int (if (> % 0) (Math/ceil %) (Math/floor %)))))))
 
 (defn move-away-from-all [r1 rooms]
   (->> rooms
@@ -71,3 +76,41 @@
 
 (defn adjust-all [rooms]
   (reduce #(update %1 %2 move-away-from-all %1) (vec rooms) (-> rooms count range)))
+
+(defn adjacent-edge [r1 r2]
+  (let [{br1 :bottom-right} (rect/corners r1)
+        {tl2 :top-left} (rect/corners r2)]
+    (cond
+      (= 1 (- (:y tl2) (:y br1))) :south
+      (= 1 (- (:x tl2) (:x br1))) :east
+      :else nil)))
+
+(defn generate-doors [r1 rooms]
+  (letfn [(with-adjacent-edge [r2]
+            [r2 (adjacent-edge r1 r2)])
+          (with-overlap [[r2 rel :as t]]
+            (cond
+              (= rel :south) (conj t (rect/overlap r1 r2 :x))
+              (= rel :east) (conj t (rect/overlap r1 r2 :y))))
+          (overlap-suffient? [[_ _ {:keys [w h]}]] (cond
+                                                     w (>= w 6)
+                                                     h (>= h 6)))
+          (make-door [[r2 edge {:keys [x w y h]}]]
+            (cond
+              (= edge :south) {:x    (+ x (quot w 2))
+                               :y    (+ (:y r1) (quot (:h r1) 2))
+                               :h    6
+                               :w    6
+                               :path [:south r1 r2]}
+              (= edge :east) {:x    (+ (:x r1) (quot (:w r1) 2))
+                              :y    (+ y (quot h 2))
+                              :h    6
+                              :w    6
+                              :path [:east r1 r2]}
+              ))]
+    (->> rooms
+         (map #(with-adjacent-edge %))
+         (remove (fn [[_ edge]] (nil? edge)))
+         (map #(with-overlap %))
+         (filter overlap-suffient?)
+         (map make-door))))
