@@ -10,7 +10,7 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 (def context {:width 900 :height 600})
-(def app-state (atom (room/create-level context 20)))
+(def app-state (atom (room/create-level context 30)))
 
 (defn clear-canvas [ctx]
   (drawing/rect ctx
